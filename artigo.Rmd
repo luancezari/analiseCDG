@@ -1,0 +1,315 @@
+---
+title: 'Analise financeira de curto prazo'
+author: 'Luan Cézari Maria'
+output: pdf_document
+classoption:
+- twocolumn
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r carrega_pacotes, message=FALSE, warning=FALSE, include=FALSE}
+if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+library(tidyverse)
+if(!require(zoo)) install.packages("zoo", repos = "http://cran.us.r-project.org")
+library(zoo)
+if(!require(scales)) install.packages("scales", repos = "http://cran.us.r-project.org")
+library(scales)
+if(!require(kableExtra)) install.packages("kableExtra", repos = "http://cran.us.r-project.org")
+library(kableExtra)
+if(!require(Hmisc)) install.packages("Hmisc", repos = "http://cran.us.r-project.org")
+library(Hmisc)
+if(!require(gt)) install.packages("gt", repos = "http://cran.us.r-project.org")
+library(gt)
+```
+
+```{r carrega_dados, echo=FALSE}
+load(file = "rda/BP.rda")
+load(file = "rda/DRE.rda")
+load(file = 'rda/CGPM.rda')
+load(file = 'rda/CICLOS.rda')
+load(file = 'rda/LIQUIDEZ.rda')
+load(file = 'rda/FLEURIET.rda')
+load(file = 'rda/BP_modificado.rda')
+load(file = 'rda/DRE_modificado.rda')
+load(file = 'rda/BP2.rda')
+```
+
+# 1. Introdução
+Essa análise é o resultado de um trabalho da matéria “finanças empresariais 2” do curso de Controladoria e Finanças. Foi analisada a empresa Lojas Americanas SA(LAME3; LAME4) entre os anos 2014 e 2019 a partir de dois métodos, o método tradicional e o método dinâmico de fleuriet.  
+A Lojas Americanas SA(LAME3; LAME4), fundada em 1929, é uma companhia com fins comerciais, atuando no nicho de varejo (consumo cíclico). A empresa atua de forma física e digital, o que possibilita a realização de suas operações comerciais com independência das lojas físicas. Em 1940, as Lojas Americanas abre seu capital, se tornando uma S.A e em 1999 seu sítio digital é oficialmente aberto. Em 2006 foi fundada a B2W, que resulta da fusão da Americanas.com com a loja Submarino. Em 2010, sua atuação atinge o espectro internacional, atuando na Argentina e Chile através da ingressos.com. Em 2013 sua estrutura comercial dobra de tamanho e em 2014, seu cartão de crédito é criado, culminando em 2018, quando seu aplicativo “Ame Digital” é lançado. A companhia vem praticando desde 2006 a política de Tag Along.
+
+
+# 2. Análise Tradicional
+
+## 2.1 Indicadores de Liquidez
+Iniciamos a análise tradicional avaliando a evolução histórica dos indicadores de liquidez da empresa.
+```{r plot_liquidez, echo=FALSE}
+LIQUIDEZ %>% mutate(Data = as.yearqtr(Data)) %>%
+  pivot_longer(c('Corrente', 'Seca', 'Imediata',), names_to = 'key') %>%
+  ggplot(aes(Data, value, col = key)) +
+  geom_line() +
+  geom_point() +
+  scale_x_yearqtr() +
+  labs(title = 'Índices de liquidez',
+       x = 'Trimestre',
+       y = '',
+       color = NULL) +
+  theme_light() +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = 'bottom')
+```
+Aqui, podemos notar que a companhia tem uma política de capital de giro bem conservadora, que vem se tornando cada vez mais conservadora ao longo do tempo. Em especial, podemos perceber um salto considerável dos índices de liquidez a partir do terceiro trimestre de 2016 até o segundo trimestre de 2017. Uma análise da variação absoluta das contas do balanço patrimonial entre os períodos mostra que esse aumento nos índices se deve principalmente ao aumento das contas caixa e equivalente de caixa e aplicações financeiras ao custo de um aumento nas dívidas de empréstimos e financiamentos de curto e longo prazo, além de aumento no capital social integralizado.
+  O índice de liquidez corrente se manteve acima de 1 em todo o período analisado, chegando próximo a 2.5 no ápice no segundo trimestre de 2018, o que indica uma gestão bastante conservadora do capital de giro da empresa. Em especial, essa informação nos permite concluir que o ativo circulante da companhia se manteve em patamares bem superiores ao passivo circulante, fato confirmado pelo gráfico do capital de giro líquido abaixo.
+```{r plot CGL, echo=FALSE}
+CGPM %>%
+  mutate(Data = as.yearqtr(Data),
+         CGL = CGL/10^6) %>% 
+  ggplot(aes(Data, CGL)) +
+  geom_line() +
+  geom_point() +
+  labs(title = 'Capital de Giro Líquido',
+       x = 'Trimestre',
+       y = 'CGL em milhões de reais') +
+  scale_x_yearqtr() +
+  scale_y_continuous(labels = dollar_format(prefix = 'R$')) +
+  theme_light() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+O índice de liquidez imediata se manteve acima de 1 a partir do segundo trimestre de 2017, indicando que a partir desse período a empresa se tornou capaz de liquidar toda as suas obrigações de curto prazo utilizando apenas caixa e títulos de alta liquidez. A princípio esses números tem o efeito positivo de reduzir o risco da companhia uma vez que há liquidez suficiente para garantir o cumprimento da maior parte das suas obrigações, no entanto, uma análise mais profunda revela problemas nessa forma de gestão. Ao captar recursos de terceiros em excesso por meio de dívidas de longo prazo e aplicar em títulos de curto prazo a firma paga uma quantidade desnecessária de juros que não é compensada com os seus rendimentos, uma vez que os juros pagos nas dívidas de longo prazo são maiores do que os recebidos pelas aplicações financeiras. Nos releases trimestrais a companhia justificou o aumento do uso de dívida de longo prazo e a subscrição de ações como uma política de reação ao risco gerado pelo cenário econômico futuro projetado e como forma captar recursos para expandir sua rede de lojas e capitalizar sua subsidiária B2W Digital. O alongamento do perfil de endividamento da companhia de fato tem impacto positivo em mitigar riscos no curto prazo mas, apesar disso, é visível que os recursos permaneceram um longo período subutilizados na forma de aplicações financeiras, o que penalizou sua própria lucratividade de forma desnecessária. Mesmo considerando os padrões mais conservadores de gestão de capital de giro fica claro que a gestão da empresa se mostrou ineficiente nesse sentido. A liquidação parcial das aplicações financeiras com consecutivo investimento dos recursos em outras contas do ativo, liquidação de dívidas existentes ou distribuição de recursos na forma de dividendos beneficiaria a empresa na medida em que aumentaria o valor gerado aos acionistas.
+
+## 2.2 Ciclos Operacionais
+Partindo para a análise dos ciclos operacionais da empresa, podemos observar a evolução histórica dos ciclos operacional e financeiro abaixo:
+```{r plot_ciclos, echo=FALSE, message=FALSE, warning=FALSE}
+CICLOS %>%
+  mutate(Data = as.yearqtr(Data)) %>% 
+  pivot_longer(c('Operacional Total', 'Financeiro'), names_to = 'key', values_to ='value') %>%
+  ggplot(aes(Data, value, col = key)) +
+  geom_line() +
+  geom_point() +
+  scale_x_yearqtr() +
+  labs(title = 'Ciclos',
+       x = 'Trimestre',
+       y = 'Ciclos em Dias',
+       color = NULL) +
+  theme_light() +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = 'bottom')
+```
+Inicialmente, podemos observar uma sazonalidade presente nos ciclos operacional e financeiro da companhia, o que é condizente com o padrão do setor de consumo cíclico. Decompondo ambas as séries temporais a partir do método aditivo podemos analisar de forma isolada a evolução histórica da tendência de ambas:
+```{r plot_tendencia_ciclos, echo=FALSE, message=FALSE, warning=FALSE}
+decCiFi <- CICLOS %>% select(Financeiro) %>% ts(start = c(2012,1), frequency = 4) %>% decompose()
+decCiOp <- CICLOS %>% select(`Operacional Total`) %>% ts(start = c(2012,1), frequency = 4) %>% decompose()
+
+
+tibble(Data = as.yearqtr(CICLOS$Data),
+       Financeiro = as.numeric(unlist(decCiFi$trend)),
+       `Operacional Total` = as.numeric(unlist(decCiOp$trend))) %>%
+  pivot_longer(c('Operacional Total', 'Financeiro'), names_to = 'key', values_to ='value') %>%
+  ggplot(aes(Data, value, col = key)) +
+  geom_line() +
+  geom_point() +
+  scale_x_yearqtr() +
+  labs(title = 'Tendência dos Ciclos Operacionais',
+       x = 'Trimestre',
+       y = 'Ciclos em Dias',
+       color = NULL) +
+  theme_light() +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = 'bottom')
+```
+Aqui, é possível observar que o ciclo operacional total da empresa se manteve relativamente constante no período analisado. Embora com uma leve tendência de alta, o valor do ciclo em número de dias se manteve bastante comportado. O ciclo financeiro, por outro lado, mostrou um comportamento aberrante, com um aumento sucetivo dos valores até atingir o ápice no segundo trimestre de 2017, a partir do qual iniciou uma tendência de baixa até atingir valores próximos ao valor no início da série. 
+```{r plot_prazos, echo=FALSE}
+CGPM %>%
+  mutate(Data = as.yearqtr(Data)) %>%
+  select(-CGL) %>% 
+  pivot_longer(c('PMC', 'PMPF', 'PME'), names_to = 'key', values_to ='value') %>%
+  ggplot(aes(Data, value, col = key)) +
+  geom_line() +
+  geom_point() +
+  scale_x_yearqtr() +
+  labs(title = 'Prazos Operacionais Médios',
+       x = 'Trimestre',
+       y = 'Prazos em Dias',
+       color = NULL) +
+  theme_light() +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = 'bottom')
+```
+Uma análise segregada dos três prazos médios relevantes, o prazo médio de cobrança, o prazo médio de estocagem e o prazo médio de pagamento de fornecedores, nos permite observar que o período de ápice do ciclo financeiro coincide com o período de baixa no prazo médio de pagamento de fornecedores. Apesar disso, em todo o período fica claro que o ciclo operacional da Lojas Americanas SA é majoritariamente financiada pelos seus fornecedores, com seu ciclo financeiro assumindo valores negativos em alguns casos. Essa característica indica que em alguns momentos na média a empresa pagou seus fornecedores após receber o pagamento dos clientes, o que é uma situação ideal difícil de se alcançar e que demonstra uma posição de barganha privilegiada em relação aos relação aos fornecedores.
+
+# 3. Análise pelo modelo Fleuriet
+Para realizar a análise pelo modelo dinâmico de Fleuriet primeiro precisamos reclassificar as contas do balanço patrimonial e da DRE (tabela com reclassificação em anexo no final). Em seguida, calculamos a necessidade de capital de giro, o capital de giro e o saldo de tesouraria. As três variáveis podem ser vistas no gráfico abaixo:
+```{r ind_fleuriet, echo=FALSE}
+FLEURIET %>% mutate(Data = as.yearqtr(Data)) %>%
+  pivot_longer(c('CDG', 'NCG', 'T',), names_to = 'key') %>%
+  ggplot(aes(Data, value, col = key)) +
+  geom_line() +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  scale_x_yearqtr() +
+  labs(title = 'Indicadores - Modelo de Fleuriet',
+       x = 'Trimestre',
+       y = '',
+       color = NULL) +
+  theme_light() +
+  scale_y_continuous(labels = dollar_format(prefix = 'R$')) +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = 'bottom')
+```
+
+## 3.1 Necessidade de Capital de Giro
+Aqui podemos notar que a necessidade de capital de giro (NCG) da firma é baixa se comparada ao capital de giro (CDG) disponível. A baixa necessidade de capital de giro indica, a princípio, que a empresa necessita de poucos recursos para manter o giro dos seus negócios, chegando, no quarto trimestre de 2014, a assumir valores negativos, isso é, deixando de ser uma aplicação de capital para se tornar uma fonte. Podemos ligar diretamente a baixa necessidade de capital de giro da empresa com o ciclo financeiro da mesma, que é bem curto. De fato, se plotarmos ambas as variáveis divididas pelos seus respectivos desvios padrões (a fim de colocá-las na mesma escala) num mesmo gráfico podemos visualmente perceber a correlação entre as duas, como visto abaixo:
+```{r ind/sd, echo=FALSE}
+FLEURIET %>% select(Data, NCG) %>%
+  mutate(NCG = NCG/sd(NCG),
+         `Ciclo Financeiro` = CICLOS$Financeiro/sd(CICLOS$Financeiro)) %>%
+  pivot_longer(c('NCG', 'Ciclo Financeiro'), names_to = 'key') %>%
+  ggplot(aes(Data, value, col = key)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous() +
+  labs(title = 'Indicadores divididos pelos desvios padrões',
+       x = 'Trimestre',
+       y = '',
+       color = NULL) +
+  theme_light() +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = 'bottom')
+```
+
+## 3.2 Capital de giro 
+Com base no gráfico apresentado no início da seção podemos, inicialmente, perceber que o capital de giro é a principal fonte de financiamento da empresa, isso é, majoritariamente a empresa se financia a partir de fundos de longo prazo. Do ponto de vista da liquidez esse fato tem valor positivo e indica saúde financeira na medida em que a companhia se financia a partir de recursos mais estáveis.
+
+## 3.3 Saldo de tesouraria
+Assim como foi observado um excesso de caixa e aplicações financeiras na análise pelo método tradicional aqui podemos notar uma preponderância incomum no saldo de tesouraria em relação à necessidade de capital de giro. O excesso de ativos erráticos em relação aos passivos erráticos evidencia uma folga considerável na situação financeira da empresa embora também represente um baixo aproveitamento os recursos disponíveis, conforme analisado anteriormente.
+
+## 3.4 Perfil financeiro e efeito tesoura
+O perfil financeiro da Americanas SA é extremamente sólido na medida em que a empresa possui bem mais liquidez do que demanda. Com todas as três variáveis, NCG, CG e T, positivas podemos concluir que toda a necessidade de capital da firma é suprida pelo capital permanente e aplicada nas operações e na tesouraria, o que gera um colchão de liquidez, protegendo a companhia de potenciais aumentos temporários de necessidade de capital de giro e colocando-a em boa posição para aproveitar tempestivamente oportunidades que surgirem.Podemos notar que a situação da empresa no período é oposta à situação do efeito tesoura onde a necessidade de capital de giro cresce mais rápido do que a oferta elevando o risco da firma e limitando seu crescimento. De fato, o que é observado é um crescimento inferior à capacidade de expansão de capital de giro da empresa. Uma análise do termômemtro de liquidez, índice de liquidez do moelo dinâmico, corrobora com toda a análise feita até então.
+```{r termometro_de_liquidez, echo=FALSE}
+FLEURIET %>% mutate(Data = as.yearqtr(Data),
+                    `Termômetro de Liquidez` = `T`/abs(NCG)) %>%
+  ggplot(aes(Data, `Termômetro de Liquidez`)) +
+  geom_line() +
+  geom_point() +
+  scale_x_yearqtr() +
+  scale_y_log10() +
+  labs(title = 'Termômetro de Liquidez (em log 10)',
+       x = 'Trimestre',
+       y = 'Log 10')  +
+  theme_light() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+Podemos notar que o índice se manteve em alta durante quase todos os períodos, ficando abaixo de 1 em apenas um trimestre e nunca ficando negativo. Aplicou-se uma transformação logarítmica nos valores para mitigar o efeito dos outliers na visualização.
+
+# 4. Conclusão
+Com base em tudo o que foi apresentado até então podemos concluir que a Lojas Americanas SA, no período entre 2014 e 2019, priorizou minimizar o risco em detrimento de maximizar sua rentabilidade, a princípio sob a justificativa de incerteza no cenário macroeconômico. Tanto sob a ótica da solvência quanto sob a ótica da liquidez a empresa se mostrou bastante segura com margens folgadas e muito caixa e títulos de alta liquidez. Embora a princípio isso seja bem positivo, o excesso de liquidez também denuncia uma potencial falta de boas oportunidades de investimento e/ou crescimento inferior ao projetado, concluir exatamente qual dos dois casos se aplica exige mais estudos e está além do escopo do presente trabalho.
+```{r, echo=FALSE, results='asis'}
+cat("\\onecolumn")
+```
+
+# 5. Anexos  
+
+## 5.1 Balanço Patrimonial
+```{r BP, echo=FALSE}
+BP2 %>% select(1:8) %>% kable(format = 'latex', booktabs = TRUE)%>%
+  kable_styling(latex_options = c('scale_down', "striped", "bordered"))  %>%
+  row_spec(row = c(1, 14),
+           bold = T,
+           color = 'white',
+           background = '#000066') %>%
+  row_spec(row = c(2, 10, 15, 23, 28),
+           bold = T,
+           color = '#0033FF')
+BP2 %>% select(1, 9:16) %>% kable(format = 'latex', booktabs = TRUE)%>%
+  kable_styling(latex_options = c('scale_down', "striped", "bordered"))  %>%
+  row_spec(row = c(1, 14),
+           bold = T,
+           color = 'white',
+           background = '#000066') %>%
+  row_spec(row = c(2, 10, 15, 23, 28),
+           bold = T,
+           color = '#0033FF')
+BP2 %>% select(1, 17:25) %>% kable(format = 'latex', booktabs = TRUE)%>%
+  kable_styling(latex_options = c('scale_down', "striped", "bordered"))  %>%
+  row_spec(row = c(1, 14),
+           bold = T,
+           color = 'white',
+           background = '#000066') %>%
+  row_spec(row = c(2, 10, 15, 23, 28),
+           bold = T,
+           color = '#0033FF')
+  
+```
+## 5.2 DRE
+```{r DRE, echo=FALSE}
+DRE %>% select(1, 2:8) %>% kable(format = 'latex', booktabs = TRUE) %>%
+  kable_styling(latex_options = c('scale_down', 'striped', 'bordered')) %>%
+  row_spec(row = c(3, 8, 12, 16, 18, 20),
+           bold = T,
+           color = '#0033FF')
+DRE %>% select(1, 9:16) %>% kable(format = 'latex', booktabs = TRUE) %>%
+  kable_styling(latex_options = c('scale_down', 'striped', 'bordered')) %>%
+  row_spec(row = c(3, 8, 12, 16, 18, 20),
+           bold = T,
+           color = '#0033FF')
+DRE %>% select(1, 17:25) %>% kable(format = 'latex', booktabs = TRUE) %>%
+  kable_styling(latex_options = c('scale_down', 'striped', 'bordered')) %>%
+  row_spec(row = c(3, 8, 12, 16, 18, 20),
+           bold = T,
+           color = '#0033FF')
+```
+## 5.3 - Balanço Patrimonial Reclassificado
+```{r BP_modificado, echo=FALSE, message=FALSE, warning=FALSE}
+BP_modificado %>% select(1:8) %>% kable(format = 'latex', booktabs = TRUE)%>%
+  kable_styling(latex_options = c('scale_down', "striped", "bordered")) %>%
+  row_spec(row = c(1, 15),
+           bold = T,
+           color = 'white',
+           background = '#000066') %>%
+  row_spec(row = c(2, 5, 11, 16, 18, 25),
+           bold = T,
+           color = '#0033FF')
+BP_modificado %>% select(1, 9:16) %>% kable(format = 'latex', booktabs = TRUE)%>%
+  kable_styling(latex_options = c('scale_down', "striped", "bordered")) %>%
+  row_spec(row = c(1, 15),
+           bold = T,
+           color = 'white',
+           background = '#000066') %>%
+  row_spec(row = c(2, 5, 11, 16, 18, 25),
+           bold = T,
+           color = '#0033FF')
+BP_modificado %>% select(1, 17:25) %>% kable(format = 'latex', booktabs = TRUE)%>%
+  kable_styling(latex_options = c('scale_down', "striped", "bordered")) %>%
+  row_spec(row = c(1, 15),
+           bold = T,
+           color = 'white',
+           background = '#000066') %>%
+  row_spec(row = c(2, 5, 11, 16, 18, 25),
+           bold = T,
+           color = '#0033FF')
+```
+## 5.4 - DRE Reclassificada
+```{r DRE_modificado, echo=FALSE, message=FALSE, warning=FALSE}
+DRE_modificado %>% select(1, 2:8) %>% kable(format = 'latex', booktabs = TRUE) %>%
+  kable_styling(latex_options = c('scale_down', 'striped', 'bordered')) %>%
+  row_spec(row = c(4, 8, 10),
+           bold = T,
+           color = '#0033FF')
+DRE_modificado %>% select(1, 9:16) %>% kable(format = 'latex', booktabs = TRUE) %>%
+  kable_styling(latex_options = c('scale_down', 'striped', 'bordered')) %>%
+  row_spec(row = c(4, 8, 10),
+           bold = T,
+           color = '#0033FF')
+DRE_modificado %>% select(1, 17:25) %>% kable(format = 'latex', booktabs = TRUE) %>%
+  kable_styling(latex_options = c('scale_down', 'striped', 'bordered')) %>%
+  row_spec(row = c(4, 8, 10),
+           bold = T,
+           color = '#0033FF')
+```
+  
+  
+  
+Códigos disponíveis em: <https://github.com/luancezari/analiseCDG>
