@@ -72,7 +72,7 @@ CGPM %>%
   geom_point() +
   labs(title = 'Capital de Giro Líquido',
        x = 'Trimestre',
-       y = 'CGL em milhões de reais') +
+       y = 'CGL em bilhões de reais') +
   scale_x_yearqtr() +
   scale_y_continuous(labels = dollar_format(prefix = 'R$')) +
   theme_light() +
@@ -144,6 +144,9 @@ Uma análise segregada dos três prazos médios relevantes, o prazo médio de co
 Para realizar a análise pelo modelo dinâmico de Fleuriet primeiro precisamos reclassificar as contas do balanço patrimonial e da DRE (tabela com reclassificação em anexo no final). Em seguida, calculamos a necessidade de capital de giro, o capital de giro e o saldo de tesouraria. As três variáveis podem ser vistas no gráfico abaixo:
 ```{r ind_fleuriet, echo=FALSE}
 FLEURIET %>% mutate(Data = as.yearqtr(Data)) %>%
+  mutate(CDG = CDG/10^6,
+         NCG = NCG/10^6,
+         `T` = `T`/10^6) %>%
   pivot_longer(c('CDG', 'NCG', 'T',), names_to = 'key') %>%
   ggplot(aes(Data, value, col = key)) +
   geom_line() +
@@ -152,7 +155,7 @@ FLEURIET %>% mutate(Data = as.yearqtr(Data)) %>%
   scale_x_yearqtr() +
   labs(title = 'Indicadores - Modelo de Fleuriet',
        x = 'Trimestre',
-       y = '',
+       y = 'Em bilhões de reais',
        color = NULL) +
   theme_light() +
   scale_y_continuous(labels = dollar_format(prefix = 'R$')) +
