@@ -35,7 +35,7 @@ CGPM %>%
   geom_point() +
   labs(title = 'Capital de Giro Líquido',
        x = 'Trimestre',
-       y = 'CGL em milhões de reais') +
+       y = 'CGL em bilhões de reais') +
   theme(plot.title = element_text(hjust = 0.5)) +
   scale_x_yearqtr() +
   scale_y_continuous(labels = dollar_format(prefix = 'R$')) +
@@ -84,7 +84,7 @@ FLEURIET %>% mutate(Data = as.yearqtr(Data)) %>%
   scale_x_yearqtr() +
   labs(title = 'Indicadores - Modelo de Fleuriet',
        x = 'Trimestre',
-       y = '',
+       y = 'Em milhares de reais',
        color = NULL) +
   theme_light() +
   scale_y_continuous(labels = dollar_format(prefix = 'R$')) +
