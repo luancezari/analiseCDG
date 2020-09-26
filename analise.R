@@ -11,7 +11,7 @@ if(!require(knitr)) install.packages("knitr", repos = "http://cran.us.r-project.
 library(knitr)
 
 ##### GRAFICOS BASICOS #####
-#Plota indices de liquidez
+# Plota indices de liquidez
 LIQUIDEZ %>% mutate(Data = as.yearqtr(Data)) %>%
   pivot_longer(c('Corrente', 'Seca', 'Imediata',), names_to = 'key') %>%
   ggplot(aes(Data, value, col = key)) +
@@ -26,7 +26,7 @@ LIQUIDEZ %>% mutate(Data = as.yearqtr(Data)) %>%
   theme(plot.title = element_text(hjust = 0.5),
         legend.position = 'bottom')
 
-#Plota CGL
+# Plota CGL
 CGPM %>%
   mutate(Data = as.yearqtr(Data),
          CGL = CGL/10^6) %>% 
@@ -42,7 +42,6 @@ CGPM %>%
   theme_light()
 
 # Plota ciclos
-
 CICLOS %>%
   mutate(Data = as.yearqtr(Data)) %>% 
   pivot_longer(c('Operacional Total', 'Financeiro'), names_to = 'key', values_to ='value') %>%
@@ -58,9 +57,7 @@ CICLOS %>%
   theme(plot.title = element_text(hjust = 0.5),
         legend.position = 'bottom')
 
-
-
-#Plota prazos medios
+# Plota prazos medios
 CGPM %>%
   mutate(Data = as.yearqtr(Data)) %>%
   select(-CGL) %>% 
@@ -77,17 +74,7 @@ CGPM %>%
   theme(plot.title = element_text(hjust = 0.5),
         legend.position = 'bottom')
 
-##### TABELA COM VARIACAO DAS CONTAS DO ATIVO E PASSIVO ENTRE 2016-3 E 2017-2 #####
-tmp <- BP %>% slice(11, 14) %>% mutate(Data = c("2016-3", "2017-2")) %>% 
-  pivot_longer(cols = -Data, values_to = 'Conta') %>% 
-  pivot_wider(names_from = Data, values_from = Conta) %>%
-  mutate(Variação = `2017-2` - `2016-3`)
-tmp %>% kable(booktabs = T)  %>% 
-  kable_styling(latex_options = c("striped", "bordered")) %>%
-  column_spec(4, color = 'white', 
-              background = spec_color(tmp$Variação, end = 0.7))
-
-##### MODELO FLEURIET #####
+# Plota variáveis do modelo dinâmico de Fleuriet
 FLEURIET %>% mutate(Data = as.yearqtr(Data)) %>%
   pivot_longer(c('CDG', 'NCG', 'T'), names_to = 'key') %>%
   ggplot(aes(Data, value, col = key)) +
@@ -104,7 +91,7 @@ FLEURIET %>% mutate(Data = as.yearqtr(Data)) %>%
   theme(plot.title = element_text(hjust = 0.5),
         legend.position = 'bottom')
 
-##### ÍNDICE DE LIQUIDEZ #####
+# Calcula e plota termômetro de liquidez
 FLEURIET %>% mutate(Data = as.yearqtr(Data),
                     `Termômetro de Liquidez` = `T`/abs(NCG)) %>%
   ggplot(aes(Data, `Termômetro de Liquidez`)) +
